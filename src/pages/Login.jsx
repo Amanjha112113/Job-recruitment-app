@@ -71,7 +71,7 @@ export const Login = () => {
   const isRecruiter = roleParam === 'recruiter';
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex animate-fade-in">
       {/* Left Side - Content varies based on role */}
       {isRecruiter ? (
         // Recruiter: Form on Left, Info on Right (HackerRank style sort of, usually business is cleaner)

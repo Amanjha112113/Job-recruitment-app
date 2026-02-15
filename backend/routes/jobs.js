@@ -34,6 +34,21 @@ router.get('/', async (req, res) => {
     }
 });
 
+// @route   GET /api/jobs/my-jobs
+// @desc    Get jobs posted by current recruiter
+// @access  Recruiter
+router.get('/my-jobs', protect, async (req, res) => {
+    if (req.user.role !== 'Recruiter' && req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Not authorized' });
+    }
+    try {
+        const jobs = await Job.find({ postedBy: req.user._id }).sort({ createdAt: -1 });
+        res.json({ success: true, jobs });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Server Error' });
+    }
+});
+
 // @route   GET /api/jobs/stats
 // @desc    Get dashboard stats
 // @access  Private
@@ -198,11 +213,15 @@ router.get('/:id/applications', protect, async (req, res) => {
         if (!job) return res.status(404).json({ message: 'Job not found' });
 
         if (req.user.role !== 'Admin' && job.postedBy.toString() !== req.user._id.toString()) {
+            console.log('Not authorized to view applications for job:', req.params.id, 'User:', req.user._id);
             return res.status(403).json({ message: 'Not authorized' });
         }
 
         const applications = await Application.find({ job: req.params.id })
             .populate('applicant', 'name email resume skills cgpa year department');
+
+        console.log(`Found ${applications.length} applications for job ${req.params.id}`);
+
 
         res.json({ success: true, applications });
     } catch (error) {

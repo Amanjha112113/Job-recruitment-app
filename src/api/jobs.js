@@ -15,6 +15,20 @@ export const getJobs = async (params = {}) => {
   }
 };
 
+export const getMyJobs = async () => {
+  try {
+    const response = await client.get('/jobs/my-jobs');
+    const jobs = response.data.jobs.map(j => ({ ...j, id: j._id }));
+    return {
+      success: true,
+      jobs: jobs,
+    };
+  } catch (error) {
+    console.error('Error fetching my jobs:', error);
+    return { success: false, error: 'Failed to fetch my jobs' };
+  }
+};
+
 export const getJobStats = async () => {
   try {
     const response = await client.get('/jobs/stats');

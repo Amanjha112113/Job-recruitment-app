@@ -81,7 +81,7 @@ export const Register = () => {
   const isRecruiter = roleParam === 'recruiter';
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex animate-fade-in">
       {/* Left Portion */}
       {isRecruiter ? (
         // Recruiter: Form Left - Matches Login Recruiter Layout (Form Left / Graphic Right)

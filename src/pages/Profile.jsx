@@ -4,7 +4,7 @@ import { updateProfile } from '../api/auth';
 import { uploadResume } from '../api/resume';
 
 export const Profile = () => {
-    const { user, login, updateUser } = useAuth();
+    const { user, login, updateUser, logout } = useAuth();
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -167,8 +167,8 @@ export const Profile = () => {
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto">
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 h-32 flex items-center justify-center">
-                        <h1 className="text-3xl font-bold text-white">Your Profile</h1>
+                    <div className="bg-black h-32 flex items-center justify-center">
+                        <h1 className="text-3xl font-bold text-white tracking-tight">Your Profile</h1>
                     </div>
 
                     <div className="p-8">
@@ -318,11 +318,18 @@ export const Profile = () => {
                                 </div>
                             )}
 
-                            <div className="flex justify-end pt-6">
+                            <div className="flex justify-between items-center pt-6">
+                                <button
+                                    type="button"
+                                    onClick={logout}
+                                    className="text-red-600 hover:text-red-800 font-medium text-sm transition-colors"
+                                >
+                                    Log Out
+                                </button>
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-transform transform hover:-translate-y-0.5 disabled:opacity-50"
+                                    className="bg-black hover:bg-gray-800 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-transform transform hover:-translate-y-0.5 disabled:opacity-50"
                                 >
                                     {loading ? 'Saving...' : 'Save Changes'}
                                 </button>
