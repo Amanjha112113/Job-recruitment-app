@@ -1,120 +1,65 @@
 import client from './client';
 
-const STORAGE_KEY_USERS = 'recruitment_users';
-const STORAGE_KEY_CURRENT_USER = 'recruitment_current_user';
-
-// Helper to get users from local storage
-const getUsers = () => {
-  const users = localStorage.getItem(STORAGE_KEY_USERS);
-  return users ? JSON.parse(users) : [];
-};
-
-// Helper to save users to local storage
-const saveUsers = (users) => {
-  localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
-};
-
 export const register = async (data) => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
   try {
-    const users = getUsers();
-    const existingUser = users.find((u) => u.email === data.email);
-
-    if (existingUser) {
-      return {
-        success: false,
-        error: 'User already exists with this email',
-      };
-    }
-
-    const newUser = {
-      id: 'user-' + Date.now(),
-      name: data.name,
-      email: data.email,
-      password: data.password, // In a real app, never store plain text passwords!
-      role: data.role || 'Job Seeker',
-    };
-
-    users.push(newUser);
-    saveUsers(users);
-
+    const response = await client.post('/auth/register', data);
     return {
       success: true,
       message: 'Registration successful',
-      user: {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role,
-      },
+      user: response.data.user,
+      token: response.data.token // if auto-login
     };
   } catch (error) {
     console.error('Registration error:', error);
     return {
       success: false,
-      error: 'Registration failed',
+      error: error.response?.data?.message || 'Registration failed',
     };
   }
 };
 
 export const login = async (data) => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
   try {
-    const users = getUsers();
-    const user = users.find((u) => u.email === data.email && u.password === data.password);
-
-    if (user) {
-      const token = 'mock-token-' + Date.now();
-      // Store current user info separately for easy 'me' access in this mock setup
-      // In a real app, 'me' would decode the token or validate it with backend
-      const userSafe = {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      };
-      localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(userSafe));
-
-      return {
-        success: true,
-        message: 'Login successful',
-        token: token,
-        user: userSafe,
-      };
-    }
-
+    const response = await client.post('/auth/login', data);
     return {
-      success: false,
-      error: 'Invalid email or password',
+      success: true,
+      message: 'Login successful',
+      token: response.data.token,
+      user: response.data.user,
     };
   } catch (error) {
     console.error('Login error:', error);
     return {
       success: false,
-      error: 'Login failed',
+      error: error.response?.data?.message || 'Login failed',
+    };
+  }
+};
+
+export const googleLogin = async (token, role) => {
+  try {
+    const response = await client.post('/auth/google', { token, role });
+    return {
+      success: true,
+      message: 'Google login successful',
+      token: response.data.token,
+      user: response.data.user,
+    };
+  } catch (error) {
+    console.error('Google Login error:', error);
+    return {
+      success: false,
+      error: error.response?.data?.message || 'Google login failed',
     };
   }
 };
 
 export const me = async () => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 200));
-
   try {
-    const userStr = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-    if (userStr) {
-      return {
-        success: true,
-        user: JSON.parse(userStr),
-      };
-    }
+    const response = await client.get('/auth/me');
     return {
-      success: false,
-      error: 'Not logged in',
+      success: true,
+      user: response.data.user,
     };
   } catch (error) {
     return {
@@ -125,29 +70,44 @@ export const me = async () => {
 };
 
 export const getAllUsers = async () => {
-  await new Promise((resolve) => setTimeout(resolve, 300));
   try {
-    const users = getUsers();
-    // Return without passwords for security simulation
-    const safeUsers = users.map(({ password, ...u }) => u);
-    return { success: true, users: safeUsers };
+    const response = await client.get('/auth/users');
+    // Normalize _id to id
+    const users = response.data.users.map(u => ({ ...u, id: u._id }));
+    return { success: true, users };
   } catch (error) {
     return { success: false, error: 'Failed to fetch users' };
   }
 };
 
-export const deleteUser = async (id) => {
-  await new Promise((resolve) => setTimeout(resolve, 300));
+export const updateUserStatus = async (id, status) => {
   try {
-    let users = getUsers();
-    const initialLength = users.length;
-    users = users.filter(u => u.id !== id);
+    const response = await client.put(`/auth/users/${id}`, { status });
+    return { success: true, user: { ...response.data.user, id: response.data.user._id } };
+  } catch (error) {
+    return { success: false, error: 'Failed to update user' };
+  }
+};
 
-    if (users.length === initialLength) {
-      return { success: false, error: 'User not found' };
-    }
+export const updateProfile = async (data) => {
+  try {
+    const response = await client.put('/auth/profile', data);
+    return {
+      success: true,
+      user: response.data.user,
+      token: response.data.token,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.response?.data?.message || 'Failed to update profile',
+    };
+  }
+};
 
-    saveUsers(users);
+export const deleteUser = async (id) => {
+  try {
+    await client.delete(`/auth/users/${id}`);
     return { success: true, message: 'User deleted' };
   } catch (error) {
     return { success: false, error: 'Failed to delete user' };

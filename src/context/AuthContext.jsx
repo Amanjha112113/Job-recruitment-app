@@ -51,6 +51,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Provide googleLogin() method
+  const googleLogin = async (token, role) => {
+    try {
+      const response = await authAPI.googleLogin(token, role);
+      if (response.success && response.token && response.user) {
+        localStorage.setItem('token', response.token);
+        setToken(response.token);
+        setUser(response.user);
+        return { success: true, user: response.user };
+      }
+      // Handle cases where user is pending or deactivated (though api/auth.js usually handles error message)
+      return { success: false, error: response.error || 'Google Login failed' };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
   // Provide logout() method
   const logout = () => {
     localStorage.removeItem('token');
@@ -62,12 +79,29 @@ export const AuthProvider = ({ children }) => {
   const register = async (data) => {
     try {
       const response = await authAPI.register(data);
-      if (response.user) {
+      if (response.success && response.token && response.user) {
+        // If we got a token and user (auto-login enabled from backend for this role/status)
+        localStorage.setItem('token', response.token);
+        setToken(response.token);
+        setUser(response.user);
+        return { success: true, user: response.user };
+      } else if (response.user) {
+        // Registration successful but no token (e.g. pending approval)
         return { success: true, user: response.user };
       }
       return { success: false, error: 'Registration failed' };
     } catch (error) {
       return { success: false, error: error.message };
+    }
+
+  };
+
+  // Helper to update user state without API call (e.g. after profile update)
+  const updateUser = (userData, newToken = null) => {
+    setUser(userData);
+    if (newToken) {
+      setToken(newToken);
+      localStorage.setItem('token', newToken);
     }
   };
 
@@ -78,8 +112,10 @@ export const AuthProvider = ({ children }) => {
         token,
         loading,
         login,
+        googleLogin,
         logout,
         register,
+        updateUser,
       }}
     >
       {children}

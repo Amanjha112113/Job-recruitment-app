@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getJobs } from '../api/jobs';
-import { getMyApplications } from '../api/applications';
-import { getAllUsers } from '../api/auth';
+import { getJobStats } from '../api/jobs';
 
 export const Dashboard = () => {
   const { user } = useAuth();
@@ -18,35 +16,10 @@ export const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const jobsData = await getJobs();
-        const allJobs = jobsData.jobs || [];
-
-        let myAppsCount = 0;
-        let myPostedJobsCount = 0;
-
-        if (user.role === 'Recruiter' || user.role === 'Admin') {
-          myPostedJobsCount = allJobs.filter(j => j.recruiterId === user.id || j.postedBy === user.email).length;
+        const statsData = await getJobStats();
+        if (statsData.success) {
+          setStats(statsData.stats);
         }
-
-        let usersCount = 0;
-        if (user.role === 'Admin') {
-          const usersData = await getAllUsers();
-          usersCount = usersData.users ? usersData.users.length : 0;
-          // Admin sees all jobs
-          myPostedJobsCount = allJobs.length;
-        }
-
-        if (user.role === 'Job Seeker' || !user.role) { // Default to job seeker logic
-          const appsData = await getMyApplications();
-          myAppsCount = appsData.total || appsData.applications?.length || 0;
-        }
-
-        setStats({
-          jobsCount: allJobs.length,
-          applicationsCount: myAppsCount,
-          myJobsCount: myPostedJobsCount,
-          usersCount
-        });
       } catch (error) {
         console.error('Error fetching stats:', error);
       } finally {
@@ -82,20 +55,22 @@ export const Dashboard = () => {
           {isRecruiter ? (
             // Recruiter Stats
             <>
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-blue-50 rounded-xl">
-                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                    </svg>
+              <Link to="/my-jobs" className="block transform transition-transform hover:-translate-y-1">
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer h-full">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-blue-50 rounded-xl">
+                      <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                      </svg>
+                    </div>
+                    <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full uppercase tracking-wide">
+                      Active
+                    </span>
                   </div>
-                  <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full uppercase tracking-wide">
-                    Active
-                  </span>
+                  <h3 className="text-gray-500 text-sm font-medium">My Posted Jobs</h3>
+                  <p className="text-4xl font-bold text-gray-900 mt-1">{loading ? '...' : stats.jobsCount}</p>
                 </div>
-                <h3 className="text-gray-500 text-sm font-medium">My Posted Jobs</h3>
-                <p className="text-4xl font-bold text-gray-900 mt-1">{loading ? '...' : stats.myJobsCount}</p>
-              </div>
+              </Link>
 
               {user.role === 'Admin' && (
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
@@ -112,18 +87,20 @@ export const Dashboard = () => {
                 </div>
               )}
 
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-green-50 rounded-xl">
-                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+              <Link to="/my-jobs" className="block transform transition-transform hover:-translate-y-1">
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer h-full">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-green-50 rounded-xl">
+                      <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </div>
+                    <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full uppercase tracking-wide">
+                      Total
+                    </span>
                   </div>
-                  <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full uppercase tracking-wide">
-                    Total
-                  </span>
+                  <h3 className="text-gray-500 text-sm font-medium">Total Candidates</h3>
+                  <p className="text-4xl font-bold text-gray-900 mt-1">{loading ? '...' : stats.applicationsCount}</p>
                 </div>
-                <h3 className="text-gray-500 text-sm font-medium">Total Candidates</h3>
-                <p className="text-4xl font-bold text-gray-900 mt-1">{loading ? '...' : '-'}</p>
-              </div>
+              </Link>
             </>
           ) : (
             // Job Seeker Stats
@@ -212,13 +189,19 @@ export const Dashboard = () => {
                   </div>
                 </Link>
               ) : (
-                <div className="group relative p-8 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden opacity-60 cursor-not-allowed">
-                  <div className="absolute top-0 right-0 p-4 opacity-10">
-                    <svg className="w-32 h-32 text-gray-600" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path></svg>
+                <Link
+                  to="/candidates"
+                  className="group relative p-8 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110">
+                    <svg className="w-32 h-32 text-indigo-600" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path></svg>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Manage Candidates (Coming Soon)</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">Manage Candidates</h3>
                   <p className="text-gray-600 max-w-sm">Review applications and shortlist candidates.</p>
-                </div>
+                  <div className="mt-4 flex items-center text-indigo-600 font-medium group-hover:translate-x-2 transition-transform">
+                    View Candidates <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                  </div>
+                </Link>
               )}
             </>
           ) : (

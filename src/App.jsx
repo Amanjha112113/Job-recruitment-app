@@ -11,6 +11,11 @@ import { PostJob } from './pages/PostJob';
 import { MyJobs } from './pages/MyJobs';
 import { JobApplications } from './pages/JobApplications';
 import { AdminUsers } from './pages/AdminUsers';
+import { JobDetails } from './pages/JobDetails';
+import { Profile } from './pages/Profile';
+import { Candidates } from './pages/Candidates';
+import { MyApplications } from './pages/MyApplications';
+import { TestUpload } from './pages/TestUpload';
 
 // Setup React Router routes:
 // /login, /register (public)
@@ -83,6 +88,46 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Apply />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/jobs/:jobId"
+              element={
+                <ProtectedRoute>
+                  <JobDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/candidates"
+              element={
+                <ProtectedRoute>
+                  <Candidates />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-applications"
+              element={
+                <ProtectedRoute>
+                  <MyApplications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/test-upload"
+              element={
+                <ProtectedRoute>
+                  <TestUpload />
                 </ProtectedRoute>
               }
             />

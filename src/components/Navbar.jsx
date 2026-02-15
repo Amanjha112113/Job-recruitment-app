@@ -53,6 +53,22 @@ export const Navbar = () => {
                   Post Job
                 </Link>
               )}
+              {isRecruiter && (
+                <Link
+                  to="/candidates"
+                  className={`px-4 py-2 rounded-lg text-sm transition-colors ${isActive('/candidates')}`}
+                >
+                  Candidates
+                </Link>
+              )}
+              {!isRecruiter && (
+                <Link
+                  to="/my-applications"
+                  className={`px-4 py-2 rounded-lg text-sm transition-colors ${isActive('/my-applications')}`}
+                >
+                  My Applications
+                </Link>
+              )}
               {user.role === 'Admin' && (
                 <Link
                   to="/admin/users"
@@ -67,6 +83,7 @@ export const Navbar = () => {
               <div className="hidden sm:flex flex-col items-end mr-2">
                 <span className="text-sm font-medium text-gray-900">{user.name}</span>
                 <span className="text-xs text-gray-500 capitalize">{user.role || 'User'}</span>
+                <Link to="/profile" className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Edit Profile</Link>
               </div>
 
               <button
