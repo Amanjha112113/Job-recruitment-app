@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { protect } = require('../middleware/authMiddleware');
 const { OAuth2Client } = require('google-auth-library');
+const axios = require('axios');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -122,15 +123,11 @@ router.post('/google', async (req, res) => {
 
     try {
         // Fetch user info using the access token
-        const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
             headers: { Authorization: `Bearer ${token}` }
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch user info from Google');
-        }
-
-        const data = await response.json();
+        const data = response.data;
         const { name, email, picture, sub: googleId } = data;
 
         let user = await User.findOne({
