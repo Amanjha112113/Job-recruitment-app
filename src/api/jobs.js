@@ -69,3 +69,30 @@ export const deleteJob = async (id) => {
     return { success: false, error: 'Failed to delete job' };
   }
 };
+
+export const saveJob = async (id) => {
+  try {
+    const response = await client.post(`/jobs/${id}/save`);
+    return { success: true, savedJobs: response.data.savedJobs };
+  } catch (error) {
+    return { success: false, error: 'Failed to save job' };
+  }
+};
+
+export const unsaveJob = async (id) => {
+  try {
+    const response = await client.post(`/jobs/${id}/unsave`);
+    return { success: true, savedJobs: response.data.savedJobs };
+  } catch (error) {
+    return { success: false, error: 'Failed to unsave job' };
+  }
+};
+
+export const getSavedJobs = async () => {
+  try {
+    const response = await client.get('/jobs/saved/all');
+    return { success: true, jobs: response.data.jobs };
+  } catch (error) {
+    return { success: false, error: 'Failed to fetch saved jobs' };
+  }
+};

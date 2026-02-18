@@ -14,7 +14,10 @@ export const PostJob = () => {
         company: '',
         location: '',
         type: 'Full-time',
-        salary: '',
+        experienceLevel: 'Entry Level',
+        minSalary: '',
+        maxSalary: '',
+        salary: '', // Optional logic to auth-generate this from min/max can be added later
         description: '',
     });
 
@@ -127,6 +130,49 @@ export const PostJob = () => {
                                     <option>Internship</option>
                                     <option>Remote</option>
                                 </select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Experience Level</label>
+                                <select
+                                    name="experienceLevel"
+                                    value={formData.experienceLevel}
+                                    onChange={handleChange}
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                >
+                                    <option>Entry Level</option>
+                                    <option>Mid Level</option>
+                                    <option>Senior Level</option>
+                                    <option>Executive</option>
+                                    <option>Internship</option>
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Min Salary</label>
+                                    <input
+                                        type="number"
+                                        name="minSalary"
+                                        value={formData.minSalary}
+                                        onChange={handleChange}
+                                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                        placeholder="Min"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Max Salary</label>
+                                    <input
+                                        type="number"
+                                        name="maxSalary"
+                                        value={formData.maxSalary}
+                                        onChange={handleChange}
+                                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                        placeholder="Max"
+                                    />
+                                </div>
                             </div>
                         </div>
 

@@ -16,6 +16,7 @@ import { Profile } from './pages/Profile';
 import { Candidates } from './pages/Candidates';
 import { MyApplications } from './pages/MyApplications';
 import { TestUpload } from './pages/TestUpload';
+import { SavedJobs } from './pages/SavedJobs';
 
 // Setup React Router routes:
 // /login, /register (public)
@@ -120,6 +121,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <MyApplications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/saved-jobs"
+              element={
+                <ProtectedRoute>
+                  <SavedJobs />
                 </ProtectedRoute>
               }
             />

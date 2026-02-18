@@ -21,6 +21,8 @@ const userSchema = new mongoose.Schema({
     // Recruiter Specific
     companyName: { type: String },
 
+    // Saved Jobs (For Job Seekers)
+    savedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Job' }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

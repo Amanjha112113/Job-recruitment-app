@@ -3,6 +3,7 @@ const router = express.Router();
 const Job = require('../models/Job');
 const Application = require('../models/Application');
 const { protect, admin } = require('../middleware/authMiddleware');
+const User = require('../models/User');
 
 // --- JOBS ---
 
@@ -23,6 +24,19 @@ router.get('/', async (req, res) => {
         if (department) query.department = department;
         if (location) query.location = { $regex: location, $options: 'i' };
         if (type) query.type = type;
+
+        // Advanced Filters
+        const { experienceLevel, maxSalary } = req.query;
+        if (experienceLevel) query.experienceLevel = experienceLevel;
+
+        if (minSalary || maxSalary) {
+            query.minSalary = {}; // Initialize if needed, but we query on range overlap or absolute values
+            // Simplification: Find jobs where their salary range overlaps or meets criteria
+            // If user says "min 50k", we want jobs where maxSalary >= 50k (or minSalary >= 50k)
+            // For simplicity in this iteration, let's assume we filter jobs that have a minSalary >= userMin
+            if (minSalary) query.minSalary = { $gte: Number(minSalary) };
+            if (maxSalary) query.maxSalary = { $lte: Number(maxSalary) };
+        }
 
         // Simple salary check if salary is just number, but it is string mostly. 
         // Skipping complex salary logic for now.
@@ -95,9 +109,17 @@ router.post('/', protect, async (req, res) => {
 
     try {
         const job = await Job.create({
-            ...req.body,
-            postedBy: req.user._id,
-            company: req.user.companyName || req.body.company // Fallback
+            title: req.body.title,
+            company: req.user.companyName || req.body.company,
+            location: req.body.location,
+            type: req.body.type,
+            department: req.body.department,
+            description: req.body.description,
+            salary: req.body.salary,
+            minSalary: req.body.minSalary,
+            maxSalary: req.body.maxSalary,
+            experienceLevel: req.body.experienceLevel,
+            postedBy: req.user._id
         });
         res.status(201).json({ success: true, job });
     } catch (error) {
@@ -253,6 +275,54 @@ router.put('/applications/:id', protect, async (req, res) => {
 
         await application.save();
         res.json({ success: true, application });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Server Error' });
+    }
+});
+
+// --- SAVED JOBS ---
+
+// @route   POST /api/jobs/:id/save
+// @desc    Save a job
+// @access  Job Seeker
+router.post('/:id/save', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (user.savedJobs.includes(req.params.id)) {
+            return res.status(400).json({ message: 'Job already saved' });
+        }
+
+        user.savedJobs.push(req.params.id);
+        await user.save();
+
+        res.json({ success: true, savedJobs: user.savedJobs });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Server Error' });
+    }
+});
+
+// @route   POST /api/jobs/:id/unsave
+// @desc    Unsave a job
+// @access  Job Seeker
+router.post('/:id/unsave', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        user.savedJobs = user.savedJobs.filter(id => id.toString() !== req.params.id);
+        await user.save();
+
+        res.json({ success: true, savedJobs: user.savedJobs });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Server Error' });
+    }
+});
+
+// @route   GET /api/jobs/saved/all
+// @desc    Get all saved jobs
+// @access  Job Seeker
+router.get('/saved/all', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).populate('savedJobs');
+        res.json({ success: true, jobs: user.savedJobs });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Server Error' });
     }

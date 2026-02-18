@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getJobs } from '../api/jobs';
+import { getJobs, saveJob, unsaveJob, getSavedJobs } from '../api/jobs';
 import { applyToJob, getMyApplications } from '../api/applications';
 import { useAuth } from '../context/AuthContext';
 
 const typeBadge = (type) => {
   const t = (type || '').toLowerCase();
-  const base = "px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase border";
-  if (t.includes('full')) return { label: 'Full Time', className: `${base} bg-green-50 text-green-700 border-green-200` };
+  const base = "px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase border shadow-sm";
+  if (t.includes('full')) return { label: 'Full Time', className: `${base} bg-emerald-50 text-emerald-700 border-emerald-200` };
   if (t.includes('intern')) return { label: 'Internship', className: `${base} bg-blue-50 text-blue-700 border-blue-200` };
-  if (t.includes('remote')) return { label: 'Remote', className: `${base} bg-purple-50 text-purple-700 border-purple-200` };
-  return { label: type, className: `${base} bg-gray-50 text-gray-700 border-gray-200` };
+  if (t.includes('remote')) return { label: 'Remote', className: `${base} bg-violet-50 text-violet-700 border-violet-200` };
+  if (t.includes('contract')) return { label: 'Contract', className: `${base} bg-amber-50 text-amber-700 border-amber-200` };
+  return { label: type, className: `${base} bg-slate-50 text-slate-700 border-slate-200` };
 };
 
 export const Jobs = () => {
@@ -19,10 +20,14 @@ export const Jobs = () => {
   const [filters, setFilters] = useState({
     search: '',
     location: '',
-    type: ''
+    type: '',
+    experienceLevel: '',
+    minSalary: '',
+    maxSalary: ''
   });
   const [jobs, setJobs] = useState([]);
   const [appliedJobIds, setAppliedJobIds] = useState(new Set());
+  const [savedJobIds, setSavedJobIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(null); // Job ID being applied to
   const [error, setError] = useState('');
@@ -36,9 +41,10 @@ export const Jobs = () => {
     const fetchJobs = async () => {
       setLoading(true);
       try {
-        const [jobsData, appsData] = await Promise.all([
+        const [jobsData, appsData, savedJobsData] = await Promise.all([
           getJobs(filters), // Pass filters to API
-          user && user.role !== 'Recruiter' ? getMyApplications() : Promise.resolve({ success: true, applications: [] })
+          user && user.role !== 'Recruiter' ? getMyApplications() : Promise.resolve({ success: true, applications: [] }),
+          user && user.role !== 'Recruiter' ? getSavedJobs() : Promise.resolve({ success: true, jobs: [] })
         ]);
 
         setJobs(jobsData.jobs || []);
@@ -46,6 +52,14 @@ export const Jobs = () => {
         if (appsData.success && appsData.applications) {
           const ids = new Set(appsData.applications.map(app => app.jobId));
           setAppliedJobIds(ids);
+        }
+
+        // Handle saved jobs data (response structure might vary, adjusting based on API return)
+        // getSavedJobs returns { success: true, jobs: [...] } where jobs are populated objects (or IDs if not populated properly, but route says populate)
+        // Route populates savedJobs. So we map to IDs.
+        if (savedJobsData.success && savedJobsData.jobs) {
+          const sIds = new Set(savedJobsData.jobs.map(j => j._id || j.id));
+          setSavedJobIds(sIds);
         }
       } catch (err) {
         console.error(err);
@@ -92,6 +106,31 @@ export const Jobs = () => {
       setError('An error occurred while applying');
     } finally {
       setApplying(null);
+    }
+  };
+
+  const handleSaveToggle = async (jobId) => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (user.role === 'Recruiter' || user.role === 'Admin') return;
+
+    const isSaved = savedJobIds.has(jobId);
+    let res;
+    if (isSaved) {
+      res = await unsaveJob(jobId);
+    } else {
+      res = await saveJob(jobId);
+    }
+
+    if (res.success) {
+      setSavedJobIds(prev => {
+        const newSet = new Set(prev);
+        if (isSaved) newSet.delete(jobId);
+        else newSet.add(jobId);
+        return newSet;
+      });
     }
   };
 
@@ -149,6 +188,42 @@ export const Jobs = () => {
                 <option value="Internship">Internship</option>
                 <option value="Contract">Contract</option>
               </select>
+            </div>
+
+            {/* New Filters */}
+            <div>
+              <select
+                name="experienceLevel"
+                value={filters.experienceLevel}
+                onChange={handleFilterChange}
+                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-lg"
+              >
+                <option value="">All Experience Levels</option>
+                <option value="Entry Level">Entry Level</option>
+                <option value="Mid Level">Mid Level</option>
+                <option value="Senior Level">Senior Level</option>
+                <option value="Executive">Executive</option>
+                <option value="Internship">Internship</option>
+              </select>
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="number"
+                name="minSalary"
+                placeholder="Min Salary"
+                value={filters.minSalary}
+                onChange={handleFilterChange}
+                className="block w-1/2 pl-3 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+              />
+              <input
+                type="number"
+                name="maxSalary"
+                placeholder="Max Salary"
+                value={filters.maxSalary}
+                onChange={handleFilterChange}
+                className="block w-1/2 pl-3 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+              />
             </div>
           </div>
         </div>
@@ -261,11 +336,30 @@ export const Jobs = () => {
                             )
                           )}
 
+
                           {isRecruiter && job.recruiterId === user.id && (
                             <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded ml-2">Your Post</span>
                           )}
                         </div>
                       </div>
+
+                      {/* Save Button for Job Seekers */}
+                      {!isRecruiter && (
+                        <button
+                          onClick={(e) => { e.preventDefault(); handleSaveToggle(job.id); }}
+                          className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className={`h-6 w-6 ${savedJobIds.has(job.id) ? 'text-red-500 fill-current' : 'text-gray-400'}`}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   );
                 })}
