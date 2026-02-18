@@ -16,7 +16,13 @@ export const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login, googleLogin } = useAuth();
+  const { user, login, googleLogin } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   // Map role param to internal role string if needed, mostly 1:1 match
   // 'recruiter' -> 'Recruiter'

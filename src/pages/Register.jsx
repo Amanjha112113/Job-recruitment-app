@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useGoogleLogin } from '@react-oauth/google';
@@ -14,7 +14,20 @@ export const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { register, googleLogin } = useAuth();
+  const { user, register, googleLogin } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      if (roleKey === 'Recruiter') {
+        // Recruiters might be pending, but generally if they have a session they go to dashboard or status page
+        navigate('/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
+    }
+  }, [user, navigate, roleKey]);
+
 
   // Map role param
   const roleKey = roleParam === 'recruiter' ? 'Recruiter' : 'Job Seeker';
