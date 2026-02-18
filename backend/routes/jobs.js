@@ -139,7 +139,7 @@ router.delete('/:id', protect, async (req, res) => {
             return res.status(403).json({ message: 'Not authorized' });
         }
 
-        await job.remove();
+        await job.deleteOne();
         res.json({ success: true, message: 'Job removed' });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Server Error' });
