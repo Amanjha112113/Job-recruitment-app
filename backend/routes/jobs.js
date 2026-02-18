@@ -146,6 +146,19 @@ router.delete('/:id', protect, async (req, res) => {
     }
 });
 
+// @route   GET /api/jobs/:id
+// @desc    Get job by ID
+// @access  Public
+router.get('/:id', async (req, res) => {
+    try {
+        const job = await Job.findById(req.params.id);
+        if (!job) return res.status(404).json({ message: 'Job not found' });
+        res.json({ success: true, job });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Server Error' });
+    }
+});
+
 
 // --- APPLICATIONS ---
 
