@@ -35,8 +35,10 @@ export const Login = () => {
       try {
         const result = await googleLogin(tokenResponse.access_token, roleKey);
         if (result.success) {
+          console.log('Google Login Success, redirecting...');
           navigate('/dashboard');
         } else {
+          console.error('Google Login Error:', result.error);
           setError(result.error || 'Google Login failed');
         }
       } catch (err) {
