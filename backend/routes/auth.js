@@ -122,13 +122,13 @@ router.post('/google', async (req, res) => {
     const { token } = req.body;
 
     try {
-        // Verify ID Token
-        const ticket = await client.verifyIdToken({
-            idToken: token,
-            audience: process.env.GOOGLE_CLIENT_ID,
+        // Fetch user info using the access token
+        const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { Authorization: `Bearer ${token}` }
         });
-        const payload = ticket.getPayload();
-        const { name, email, picture, sub: googleId } = payload;
+
+        const data = response.data;
+        const { name, email, picture, sub: googleId } = data;
 
         let user = await User.findOne({
             $or: [
