@@ -8,6 +8,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+console.log('--- Server Config ---');
+console.log('PORT:', PORT);
+console.log('MONGO_URI:', process.env.MONGO_URI ? 'Set' : 'Not Set');
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'Set' : 'Not Set');
+console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? 'Set' : 'Not Set');
+console.log('CLIENT_URL:', process.env.CLIENT_URL);
+console.log('---------------------');
+
 // Middleware
 app.use(cors({
     origin: process.env.CLIENT_URL || 'http://localhost:5173',
