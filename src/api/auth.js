@@ -49,7 +49,7 @@ export const googleLogin = async (token, role) => {
     console.error('Google Login error:', error);
     return {
       success: false,
-      error: error.response?.data?.message || 'Google login failed',
+      error: error.response?.data?.error || error.response?.data?.message || 'Google login failed',
     };
   }
 };
