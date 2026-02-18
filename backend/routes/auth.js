@@ -138,7 +138,13 @@ router.post('/google', async (req, res) => {
         });
 
         console.log('Google Auth Debug - User found:', user ? user._id : 'No user found');
-        console.log('Google Auth Debug - Request Role:', req.body.role);
+        let roleInput = req.body.role;
+        // Normalize role to match Schema enum
+        if (roleInput === 'job-seeker' || roleInput === 'Job Seeker') roleInput = 'Job Seeker';
+        else if (roleInput === 'recruiter' || roleInput === 'Recruiter') roleInput = 'Recruiter';
+        else roleInput = 'Job Seeker'; // Default
+
+        console.log('Google Auth Debug - Normalized Role:', roleInput);
 
         if (user) {
             // If user exists but doesn't have googleId linked (e.g. signed up with email/password), link it
@@ -173,7 +179,7 @@ router.post('/google', async (req, res) => {
                 name,
                 email,
                 password: await bcrypt.hash(Math.random().toString(36).slice(-8), 10), // Random password
-                role: req.body.role || 'Job Seeker', // Use provided role or default
+                role: roleInput, // Use normalized role
                 status: 'active',
                 googleId,
                 avatar: picture
