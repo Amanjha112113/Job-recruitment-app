@@ -8,6 +8,8 @@ export const Register = () => {
   const [searchParams] = useSearchParams();
   const roleParam = searchParams.get('role');
 
+  const roleKey = roleParam === 'recruiter' ? 'Recruiter' : 'Job Seeker';
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,8 +31,7 @@ export const Register = () => {
   }, [user, navigate, roleKey]);
 
 
-  // Map role param
-  const roleKey = roleParam === 'recruiter' ? 'Recruiter' : 'Job Seeker';
+  // Map role param (Moved to top)
 
   // If no role specified or invalid, show selection screen
   if (!roleParam || (roleParam !== 'recruiter' && roleParam !== 'job-seeker')) {
