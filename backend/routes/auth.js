@@ -137,6 +137,9 @@ router.post('/google', async (req, res) => {
             ]
         });
 
+        console.log('Google Auth Debug - User found:', user ? user._id : 'No user found');
+        console.log('Google Auth Debug - Request Role:', req.body.role);
+
         if (user) {
             // If user exists but doesn't have googleId linked (e.g. signed up with email/password), link it
             if (!user.googleId) {
