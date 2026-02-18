@@ -121,6 +121,10 @@ router.post('/login', async (req, res) => {
 router.post('/google', async (req, res) => {
     const { token } = req.body;
 
+    if (!token) {
+        return res.status(400).json({ message: 'Google token is required' });
+    }
+
     try {
         // Fetch user info using the access token
         const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -130,6 +134,10 @@ router.post('/google', async (req, res) => {
         const data = response.data;
         const { name, email, picture, sub: googleId } = data;
 
+        if (!email) {
+            return res.status(400).json({ message: 'Google account does not have an email address' });
+        }
+
         let user = await User.findOne({
             $or: [
                 { googleId },
@@ -137,24 +145,28 @@ router.post('/google', async (req, res) => {
             ]
         });
 
-        console.log('Google Auth Debug - User found:', user ? user._id : 'No user found');
         let roleInput = req.body.role;
-        // Normalize role to match Schema enum
-        if (roleInput === 'job-seeker' || roleInput === 'Job Seeker') roleInput = 'Job Seeker';
-        else if (roleInput === 'recruiter' || roleInput === 'Recruiter') roleInput = 'Recruiter';
-        else roleInput = 'Job Seeker'; // Default
+        // Strict Role Normalization
+        if (roleInput) {
+            const normalized = String(roleInput).toLowerCase().trim();
+            if (normalized === 'recruiter') roleInput = 'Recruiter';
+            else if (normalized === 'job seeker' || normalized === 'job-seeker') roleInput = 'Job Seeker';
+            else if (normalized === 'admin') roleInput = 'Admin';
+            else roleInput = 'Job Seeker';
+        } else {
+            roleInput = 'Job Seeker';
+        }
 
-        console.log('Google Auth Debug - Normalized Role:', roleInput);
+        console.log(`Google Auth: Processing ${email} as ${roleInput}`);
 
         if (user) {
-            // If user exists but doesn't have googleId linked (e.g. signed up with email/password), link it
+            // Update existing user
             if (!user.googleId) {
                 user.googleId = googleId;
                 if (!user.avatar) user.avatar = picture;
                 await user.save();
             }
 
-            // Check status
             if (user.status === 'pending') {
                 return res.status(401).json({ message: 'Account is pending approval' });
             }
@@ -175,17 +187,21 @@ router.post('/google', async (req, res) => {
             });
         } else {
             // Create new user
-            const newUser = await User.create({
-                name,
-                email,
-                password: await bcrypt.hash(Math.random().toString(36).slice(-8), 10), // Random password
-                role: roleInput, // Use normalized role
-                status: 'active',
-                googleId,
-                avatar: picture
-            });
+            try {
+                const newUser = await User.create({
+                    name: name || 'Google User',
+                    email,
+                    password: await bcrypt.hash(Math.random().toString(36).slice(-8), 10),
+                    role: roleInput,
+                    status: 'active',
+                    googleId,
+                    avatar: picture,
+                    // Initialize student fields if Job Seeker
+                    skills: roleInput === 'Job Seeker' ? '' : undefined
+                });
 
-            if (newUser) {
+                console.log('Google Auth: New User Created', newUser._id);
+
                 return res.status(201).json({
                     user: {
                         id: newUser._id,
@@ -197,13 +213,17 @@ router.post('/google', async (req, res) => {
                     },
                     token: generateToken(newUser._id),
                 });
-            } else {
-                return res.status(400).json({ message: 'Invalid user data' });
+            } catch (createError) {
+                console.error('Google Auth Create Error:', createError);
+                return res.status(400).json({
+                    message: 'Failed to create user',
+                    error: createError.message
+                });
             }
         }
 
     } catch (error) {
-        console.error('Google Auth Error:', error);
+        console.error('Google Auth Logic Error:', error);
         res.status(500).json({
             message: 'Google authentication failed',
             error: error.message,
