@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getJobs, saveJob, unsaveJob, getSavedJobs } from '../api/jobs';
-import { applyToJob, getMyApplications } from '../api/applications';
+import { getMyApplications } from '../api/applications';
 import { useAuth } from '../context/AuthContext';
 
 const typeBadge = (type) => {
   const t = (type || '').toLowerCase();
   const base = "px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase border shadow-sm";
-  if (t.includes('full')) return { label: 'Full Time', className: `${base} bg-emerald-50 text-emerald-700 border-emerald-200` };
-  if (t.includes('intern')) return { label: 'Internship', className: `${base} bg-blue-50 text-blue-700 border-blue-200` };
-  if (t.includes('remote')) return { label: 'Remote', className: `${base} bg-violet-50 text-violet-700 border-violet-200` };
-  if (t.includes('contract')) return { label: 'Contract', className: `${base} bg-amber-50 text-amber-700 border-amber-200` };
-  return { label: type, className: `${base} bg-slate-50 text-slate-700 border-slate-200` };
+  if (t.includes('full')) return { label: 'Full Time', className: `${base} bg - emerald - 50 text - emerald - 700 border - emerald - 200` };
+  if (t.includes('intern')) return { label: 'Internship', className: `${base} bg - blue - 50 text - blue - 700 border - blue - 200` };
+  if (t.includes('remote')) return { label: 'Remote', className: `${base} bg - violet - 50 text - violet - 700 border - violet - 200` };
+  if (t.includes('contract')) return { label: 'Contract', className: `${base} bg - amber - 50 text - amber - 700 border - amber - 200` };
+  return { label: type, className: `${base} bg - slate - 50 text - slate - 700 border - slate - 200` };
 };
 
 export const Jobs = () => {
@@ -29,7 +29,7 @@ export const Jobs = () => {
   const [appliedJobIds, setAppliedJobIds] = useState(new Set());
   const [savedJobIds, setSavedJobIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
-  const [applying, setApplying] = useState(null); // Job ID being applied to
+  const [applying, setApplying] = useState(null);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -50,7 +50,10 @@ export const Jobs = () => {
         setJobs(jobsData.jobs || []);
 
         if (appsData.success && appsData.applications) {
-          const ids = new Set(appsData.applications.map(app => app.jobId));
+          const ids = new Set(appsData.applications.map(app => {
+            const rawId = app.jobId || (app.job && (app.job._id || app.job)) || app.job;
+            return rawId ? rawId.toString() : null;
+          }).filter(Boolean));
           setAppliedJobIds(ids);
         }
 
@@ -58,7 +61,10 @@ export const Jobs = () => {
         // getSavedJobs returns { success: true, jobs: [...] } where jobs are populated objects (or IDs if not populated properly, but route says populate)
         // Route populates savedJobs. So we map to IDs.
         if (savedJobsData.success && savedJobsData.jobs) {
-          const sIds = new Set(savedJobsData.jobs.map(j => j._id || j.id));
+          const sIds = new Set(savedJobsData.jobs.map(j => {
+            const jId = j._id || j.id;
+            return jId ? jId.toString() : null;
+          }).filter(Boolean));
           setSavedJobIds(sIds);
         }
       } catch (err) {
@@ -78,7 +84,7 @@ export const Jobs = () => {
   }, [user, filters]); // Re-run when filters change
 
 
-  const handleApply = async (jobId) => {
+  const handleApply = (jobId) => {
     if (!user) {
       navigate('/login');
       return;
@@ -89,24 +95,7 @@ export const Jobs = () => {
       return;
     }
 
-    setApplying(jobId);
-    setError('');
-    setSuccessMsg('');
-
-    try {
-      const res = await applyToJob(jobId, {});
-      if (res.success) {
-        setAppliedJobIds(prev => new Set(prev).add(jobId));
-        setSuccessMsg('Application submitted successfully!');
-        setTimeout(() => setSuccessMsg(''), 3000);
-      } else {
-        setError(res.error || 'Failed to apply');
-      }
-    } catch (err) {
-      setError('An error occurred while applying');
-    } finally {
-      setApplying(null);
-    }
+    navigate(`/apply/${jobId}`);
   };
 
   const handleSaveToggle = async (jobId) => {
@@ -259,11 +248,12 @@ export const Jobs = () => {
                 {jobs.map((job) => {
                   const badge = typeBadge(job.type);
                   const letter = job.company ? job.company.charAt(0).toUpperCase() : 'C';
-                  const isApplied = appliedJobIds.has(job.id);
+                  const jobIdStr = (job.id || job._id).toString();
+                  const isApplied = appliedJobIds.has(jobIdStr);
                   const isRecruiter = user?.role === 'Recruiter' || user?.role === 'Admin';
 
                   return (
-                    <div key={job.id} className="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-indigo-100 transition-all duration-200">
+                    <div key={jobIdStr} className="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-indigo-100 transition-all duration-200">
                       <div className="flex flex-col md:flex-row gap-6">
                         {/* Logo */}
                         <div className="flex-shrink-0">
@@ -315,23 +305,31 @@ export const Jobs = () => {
                         </div>
 
                         {/* Action */}
-                        <div className="flex items-center">
+                        <div className="flex items-center gap-3">
                           {isApplied ? (
                             <button
                               disabled
-                              className="w-full md:w-auto inline-flex items-center justify-center px-6 py-2 border border-green-200 bg-green-50 text-green-700 text-sm font-medium rounded-lg cursor-not-allowed"
+                              className="w-full md:w-auto inline-flex items-center justify-center px-6 py-2 border border-green-200 bg-green-50 text-green-700 text-sm font-medium rounded-lg cursor-not-allowed transition-all duration-300 transform scale-105"
                             >
                               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                              Applied
+                              Submitted
                             </button>
                           ) : (
                             !isRecruiter && (
                               <button
                                 onClick={() => handleApply(job.id)}
                                 disabled={applying === job.id}
-                                className="w-full md:w-auto inline-flex items-center justify-center px-6 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm hover:shadow transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70 disabled:cursor-wait"
+                                className="w-full md:w-auto inline-flex items-center justify-center px-6 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70 disabled:cursor-wait"
                               >
-                                {applying === job.id ? 'Applying...' : 'Apply Now'}
+                                {applying === job.id ? (
+                                  <>
+                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Applying...
+                                  </>
+                                ) : 'Apply Now'}
                               </button>
                             )
                           )}
@@ -340,26 +338,30 @@ export const Jobs = () => {
                           {isRecruiter && job.recruiterId === user.id && (
                             <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded ml-2">Your Post</span>
                           )}
+
+                          {/* Save Button for Job Seekers */}
+                          {!isRecruiter && (
+                            <button
+                              onClick={(e) => { e.preventDefault(); handleSaveToggle(job.id); }}
+                              className={`p-2 rounded-full transition-all duration-200 ${savedJobIds.has(job.id)
+                                ? 'bg-red-50 text-red-500 hover:bg-red-100'
+                                : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+                                }`}
+                              title={savedJobIds.has(job.id) ? "Remove from Saved" : "Save Job"}
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className={`h-6 w-6 transition-transform duration-200 ${savedJobIds.has(job.id) ? 'fill-current scale-110' : ''}`}
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                              </svg>
+                            </button>
+                          )}
                         </div>
                       </div>
-
-                      {/* Save Button for Job Seekers */}
-                      {!isRecruiter && (
-                        <button
-                          onClick={(e) => { e.preventDefault(); handleSaveToggle(job.id); }}
-                          className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className={`h-6 w-6 ${savedJobIds.has(job.id) ? 'text-red-500 fill-current' : 'text-gray-400'}`}
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                          </svg>
-                        </button>
-                      )}
                     </div>
                   );
                 })}

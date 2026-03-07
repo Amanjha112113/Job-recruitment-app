@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getJobs } from '../api/jobs';
-import { applyToJob, getMyApplications } from '../api/applications';
+import { getMyApplications } from '../api/applications';
 import { useAuth } from '../context/AuthContext';
 
 const typeBadge = (type) => {
@@ -19,9 +19,8 @@ export const JobDetails = () => {
     const navigate = useNavigate();
     const [job, setJob] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [applying, setApplying] = useState(false);
     const [error, setError] = useState('');
-    const [successMsg, setSuccessMsg] = useState('');
+    const [isAppliedJob, setIsAppliedJob] = useState(false);
 
     useEffect(() => {
         const fetchJobAndStatus = async () => {
@@ -34,17 +33,23 @@ export const JobDetails = () => {
                     // Check if already applied
                     if (user && user.role === 'Job Seeker') {
                         const appsRes = await getMyApplications();
+                        console.log('appsRes:', appsRes);
                         if (appsRes.success) {
-                            const hasApplied = appsRes.applications.some(app => app.job === jobId || app.job._id === jobId);
+                            const hasApplied = appsRes.applications.some(app => {
+                                const jId = app.jobId || (app.job && (app.job._id || app.job.id)) || (typeof app.job === 'string' ? app.job : null);
+                                const stringId = jId ? String(jId) : null;
+                                return stringId === String(jobId);
+                            });
+                            console.log('hasApplied evaluated to:', hasApplied);
                             if (hasApplied) {
-                                setSuccessMsg('You have already applied to this job.');
+                                setIsAppliedJob(true);
                             }
                         }
                     }
                 } else {
                     setError('Job not found');
                 }
-            } catch (err) {
+            } catch {
                 setError('Failed to load job details');
             } finally {
                 setLoading(false);
@@ -53,7 +58,7 @@ export const JobDetails = () => {
         fetchJobAndStatus();
     }, [jobId, user]);
 
-    const handleApply = async () => {
+    const handleApply = () => {
         if (!user) {
             navigate('/login');
             return;
@@ -63,22 +68,7 @@ export const JobDetails = () => {
             return;
         }
 
-        setApplying(true);
-        setError('');
-        setSuccessMsg('');
-
-        try {
-            const res = await applyToJob(jobId, {});
-            if (res.success) {
-                setSuccessMsg('Application submitted successfully!');
-            } else {
-                setError(res.error || 'Failed to apply');
-            }
-        } catch (err) {
-            setError('An error occurred while applying');
-        } finally {
-            setApplying(false);
-        }
+        navigate(`/apply/${jobId}`);
     };
 
     if (loading) {
@@ -122,13 +112,6 @@ export const JobDetails = () => {
                     </div>
                 )}
 
-                {successMsg && (
-                    <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-r-lg shadow-sm animate-fade-in-up">
-                        <p className="font-bold">Success</p>
-                        <p>{successMsg}</p>
-                    </div>
-                )}
-
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                     <div className="bg-gradient-to-r from-indigo-600 to-purple-600 h-32 md:h-48 relative">
                         <div className="absolute -bottom-16 left-8">
@@ -162,13 +145,22 @@ export const JobDetails = () => {
                                 </div>
                             </div>
                             {!isRecruiter && (
-                                <button
-                                    onClick={handleApply}
-                                    disabled={applying || successMsg}
-                                    className="w-full md:w-auto px-8 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/30 transition-all transform hover:-translate-y-0.5"
-                                >
-                                    {applying ? 'Applying...' : successMsg ? 'Applied' : 'Apply Now'}
-                                </button>
+                                isAppliedJob ? (
+                                    <button
+                                        disabled
+                                        className="w-full md:w-auto px-8 py-3 bg-green-50 border border-green-200 text-green-700 font-semibold rounded-xl cursor-not-allowed transition-all duration-300 transform scale-105 flex items-center justify-center"
+                                    >
+                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                                        Submitted
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={handleApply}
+                                        className="w-full md:w-auto px-8 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/30 transition-all transform hover:-translate-y-0.5 flex items-center justify-center"
+                                    >
+                                        Apply Now
+                                    </button>
+                                )
                             )}
                         </div>
 

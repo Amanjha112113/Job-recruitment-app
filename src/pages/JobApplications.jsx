@@ -6,10 +6,10 @@ import { getResumeUrl } from '../api/resume';
 import { useAuth } from '../context/AuthContext';
 
 const statusStyles = {
-    'Pending': 'bg-gray-100 text-gray-700 border-gray-200',
+    'Applied': 'bg-gray-100 text-gray-700 border-gray-200',
     'Shortlisted': 'bg-black text-white border-black',
     'Rejected': 'bg-white text-gray-400 border-gray-200 line-through decoration-gray-400',
-    'Accepted': 'bg-white text-black border-black font-bold',
+    'Selected': 'bg-white text-black border-black font-bold',
     'Interview Scheduled': 'bg-purple-50 text-purple-700 ring-1 ring-inset ring-purple-700/10',
 };
 
@@ -331,6 +331,38 @@ export const JobApplications = () => {
                                                 );
                                             })()}
                                         </div>
+
+                                        {/* LinkedIn Profile */}
+                                        {selectedApp.linkedIn && (
+                                            <div>
+                                                <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                                                    LinkedIn Profile
+                                                </h4>
+                                                <a
+                                                    href={selectedApp.linkedIn}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all text-sm font-medium text-blue-600 truncate"
+                                                >
+                                                    View Profile
+                                                    <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                                </a>
+                                            </div>
+                                        )}
+
+                                        {/* Cover Letter */}
+                                        {selectedApp.coverLetter && (
+                                            <div>
+                                                <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                                    Cover Letter
+                                                </h4>
+                                                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 whitespace-pre-wrap">
+                                                    {selectedApp.coverLetter}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -342,28 +374,28 @@ export const JobApplications = () => {
                                     onClick={() => handleStatusUpdate(selectedApp.id, 'Rejected')}
                                     className="inline-flex justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 w-full sm:w-auto hover:text-red-600 hover:border-red-200"
                                 >
-                                    Reject
+                                    Rejected
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => handleStatusUpdate(selectedApp.id, 'Interview Scheduled')}
                                     className="inline-flex justify-center rounded-lg border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 w-full sm:w-auto"
                                 >
-                                    Schedule Interview
+                                    Interview Scheduled
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => handleStatusUpdate(selectedApp.id, 'Shortlisted')}
                                     className="inline-flex justify-center rounded-lg border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 w-full sm:w-auto"
                                 >
-                                    Shortlist
+                                    Shortlisted
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => handleStatusUpdate(selectedApp.id, 'Accepted')}
+                                    onClick={() => handleStatusUpdate(selectedApp.id, 'Selected')}
                                     className="inline-flex justify-center rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto"
                                 >
-                                    Hire Applicant
+                                    Selected
                                 </button>
                             </div>
                         </div>

@@ -355,7 +355,7 @@ export const Dashboard = () => {
               </Link>
 
               <Link
-                to="/jobs" // Ideally a different page for applications tracking specifically, using /jobs for now
+                to="/my-applications"
                 className="group relative p-8 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden"
               >
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110">

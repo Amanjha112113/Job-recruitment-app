@@ -6,18 +6,18 @@ import { getResumeUrl } from '../api/resume'; // Import new API function
 
 const tabStatusMap = {
     'All': null,
-    'Applied': 'Pending',
+    'Applied': 'Applied',
     'Shortlisted': 'Shortlisted',
     'Interview Scheduled': 'Interview Scheduled',
-    'Selected': 'Accepted',
+    'Selected': 'Selected',
     'Rejected': 'Rejected'
 };
 
 const statusStyles = {
-    'Pending': 'bg-yellow-50 text-yellow-800 ring-1 ring-inset ring-yellow-600/20',
+    'Applied': 'bg-yellow-50 text-yellow-800 ring-1 ring-inset ring-yellow-600/20',
     'Shortlisted': 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20',
     'Interview Scheduled': 'bg-purple-50 text-purple-700 ring-1 ring-inset ring-purple-700/10',
-    'Accepted': 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-700/10',
+    'Selected': 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-700/10',
     'Rejected': 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/10',
 };
 
@@ -395,7 +395,7 @@ export const Candidates = () => {
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => handleStatusUpdate(selectedApp.id, 'Accepted')}
+                                        onClick={() => handleStatusUpdate(selectedApp.id, 'Selected')}
                                         className="inline-flex justify-center rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto"
                                     >
                                         Hire Applicant

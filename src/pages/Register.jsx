@@ -33,11 +33,6 @@ export const Register = () => {
 
   // Map role param (Moved to top)
 
-  // If no role specified or invalid, show selection screen
-  if (!roleParam || (roleParam !== 'recruiter' && roleParam !== 'job-seeker')) {
-    return <AuthSelection mode="register" />;
-  }
-
   const handleGoogleRegister = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setLoading(true);
@@ -62,6 +57,11 @@ export const Register = () => {
       setError('Google Register Failed');
     },
   });
+
+  // If no role specified or invalid, show selection screen
+  if (!roleParam || (roleParam !== 'recruiter' && roleParam !== 'job-seeker')) {
+    return <AuthSelection mode="register" />;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

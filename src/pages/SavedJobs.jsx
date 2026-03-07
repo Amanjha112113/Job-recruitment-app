@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getSavedJobs, unsaveJob } from '../api/jobs';
-import { applyToJob, getMyApplications } from '../api/applications';
+import { getMyApplications } from '../api/applications';
 import { useAuth } from '../context/AuthContext';
 
 const typeBadge = (type) => {
@@ -19,9 +19,7 @@ export const SavedJobs = () => {
     const [jobs, setJobs] = useState([]);
     const [appliedJobIds, setAppliedJobIds] = useState(new Set());
     const [loading, setLoading] = useState(true);
-    const [applying, setApplying] = useState(null);
     const [error, setError] = useState('');
-    const [successMsg, setSuccessMsg] = useState('');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -62,30 +60,13 @@ export const SavedJobs = () => {
         }
     };
 
-    const handleApply = async (jobId) => {
+    const handleApply = (jobId) => {
         if (!user) {
             navigate('/login');
             return;
         }
 
-        setApplying(jobId);
-        setError('');
-        setSuccessMsg('');
-
-        try {
-            const res = await applyToJob(jobId, {});
-            if (res.success) {
-                setAppliedJobIds(prev => new Set(prev).add(jobId));
-                setSuccessMsg('Application submitted successfully!');
-                setTimeout(() => setSuccessMsg(''), 3000);
-            } else {
-                setError(res.error || 'Failed to apply');
-            }
-        } catch (err) {
-            setError('An error occurred while applying');
-        } finally {
-            setApplying(null);
-        }
+        navigate(`/apply/${jobId}`);
     };
 
     if (loading) {
@@ -108,13 +89,6 @@ export const SavedJobs = () => {
                     <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg shadow-sm">
                         <p className="font-bold">Error</p>
                         <p>{error}</p>
-                    </div>
-                )}
-
-                {successMsg && (
-                    <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-r-lg shadow-sm animate-fade-in-up">
-                        <p className="font-bold">Success</p>
-                        <p>{successMsg}</p>
                     </div>
                 )}
 
@@ -199,18 +173,17 @@ export const SavedJobs = () => {
                                             {isApplied ? (
                                                 <button
                                                     disabled
-                                                    className="w-full md:w-auto inline-flex items-center justify-center px-6 py-2 border border-green-200 bg-green-50 text-green-700 text-sm font-medium rounded-lg cursor-not-allowed"
+                                                    className="w-full md:w-auto inline-flex items-center justify-center px-6 py-2 border border-green-200 bg-green-50 text-green-700 text-sm font-medium rounded-lg cursor-not-allowed transition-all duration-300 transform scale-105"
                                                 >
                                                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                                                    Applied
+                                                    Submitted
                                                 </button>
                                             ) : (
                                                 <button
                                                     onClick={() => handleApply(jobId)}
-                                                    disabled={applying === jobId}
-                                                    className="w-full md:w-auto inline-flex items-center justify-center px-6 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm hover:shadow transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70 disabled:cursor-wait"
+                                                    className="w-full md:w-auto inline-flex items-center justify-center px-6 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70 disabled:cursor-wait"
                                                 >
-                                                    {applying === jobId ? 'Applying...' : 'Apply Now'}
+                                                    Apply Now
                                                 </button>
                                             )}
                                         </div>

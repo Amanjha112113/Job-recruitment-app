@@ -18,7 +18,7 @@ export const getMyApplications = async () => {
     const applications = response.data.applications.map(app => ({ ...app, id: app._id }));
     return { success: true, applications: applications };
   } catch (error) {
-    return { success: false, error: 'Failed to fetch applications' };
+    return { success: false, error: error.response?.data?.error || error.message || 'Failed to fetch applications' };
   }
 };
 

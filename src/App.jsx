@@ -17,6 +17,7 @@ import { Candidates } from './pages/Candidates';
 import { MyApplications } from './pages/MyApplications';
 import { TestUpload } from './pages/TestUpload';
 import { SavedJobs } from './pages/SavedJobs';
+import ArchivedApplications from './pages/ArchivedApplications';
 
 // Setup React Router routes:
 // /login, /register (public)
@@ -137,6 +138,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <TestUpload />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/archived"
+              element={
+                <ProtectedRoute>
+                  <ArchivedApplications />
                 </ProtectedRoute>
               }
             />

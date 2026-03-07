@@ -1,4 +1,5 @@
 const express = require('express');
+const fs = require('fs');
 const router = express.Router();
 const Job = require('../models/Job');
 const Application = require('../models/Application');
@@ -76,7 +77,7 @@ router.get('/stats', protect, async (req, res) => {
 
         if (req.user.role === 'Admin') {
             stats.jobsCount = await Job.countDocuments();
-            stats.applicationsCount = await Application.countDocuments();
+            stats.applicationsCount = await Application.countDocuments({ status: { $ne: 'Job Deleted' } });
             stats.usersCount = await require('../models/User').countDocuments();
         } else if (req.user.role === 'Recruiter') {
             // Jobs posted by this recruiter
@@ -85,11 +86,17 @@ router.get('/stats', protect, async (req, res) => {
 
             // Applications for those jobs
             const jobIds = jobs.map(job => job._id);
-            stats.applicationsCount = await Application.countDocuments({ job: { $in: jobIds } });
+            stats.applicationsCount = await Application.countDocuments({
+                job: { $in: jobIds },
+                status: { $ne: 'Job Deleted' }
+            });
         } else {
             // Job Seeker
             stats.jobsCount = await Job.countDocuments(); // Available jobs
-            stats.applicationsCount = await Application.countDocuments({ applicant: req.user._id });
+            stats.applicationsCount = await Application.countDocuments({
+                applicant: req.user._id,
+                status: { $ne: 'Job Deleted' }
+            });
         }
 
         res.json({ success: true, stats });
@@ -139,26 +146,23 @@ router.delete('/:id', protect, async (req, res) => {
             return res.status(403).json({ message: 'Not authorized' });
         }
 
+        // Mark associated applications as Job Deleted
+        await Application.updateMany(
+            { job: req.params.id },
+            {
+                $set: {
+                    status: 'Job Deleted',
+                    feedback: 'The recruiter has removed this job posting.'
+                }
+            }
+        );
+
         await job.deleteOne();
         res.json({ success: true, message: 'Job removed' });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Server Error' });
     }
 });
-
-// @route   GET /api/jobs/:id
-// @desc    Get job by ID
-// @access  Public
-router.get('/:id', async (req, res) => {
-    try {
-        const job = await Job.findById(req.params.id);
-        if (!job) return res.status(404).json({ message: 'Job not found' });
-        res.json({ success: true, job });
-    } catch (error) {
-        res.status(500).json({ success: false, error: 'Server Error' });
-    }
-});
-
 
 // --- APPLICATIONS ---
 
@@ -182,7 +186,11 @@ router.post('/:id/apply', protect, async (req, res) => {
         const application = await Application.create({
             job: req.params.id,
             applicant: req.user._id,
-            resume: req.user.resume || req.body.resume, // Use profile resume or one sent in body
+            resume: req.body.resume || req.user.resume,
+            linkedIn: req.body.resumeLink || req.body.linkedIn, // Support legacy payload naming temporarily
+            coverLetter: req.body.coverLetter,
+            phone: req.body.phone,
+            status: 'Applied'
         });
 
         res.status(201).json({ success: true, application });
@@ -197,21 +205,35 @@ router.post('/:id/apply', protect, async (req, res) => {
 // @access  Student
 router.get('/my-applications', protect, async (req, res) => {
     try {
+        console.log('Fetching applications for user:', req.user._id);
         const applications = await Application.find({ applicant: req.user._id })
             .populate('job', 'title company location type');
 
-        // Transform for frontend expectation if needed, or update frontend to read this structure
+        console.log(`Found ${applications.length} applications`);
+
         res.json({
-            success: true, applications: applications.map(app => ({
-                ...app.toObject(),
-                jobId: app.job._id, // Add convenience fields
-                jobTitle: app.job.title,
-                company: app.job.company
-            }))
+            success: true,
+            applications: applications.map(app => {
+                const appObj = app.toObject();
+                if (app.job) {
+                    return {
+                        ...appObj,
+                        jobId: app.job._id,
+                        jobTitle: app.job.title,
+                        company: app.job.company
+                    };
+                }
+                return appObj;
+            })
         });
     } catch (error) {
-        res.status(500).json({ success: false, error: 'Server Error' });
+        console.error('SERVER ERROR in /my-applications:', error.stack || error);
+        res.status(500).json({ success: false, error: error.message || 'Server Error' });
     }
+});
+
+router.get('/test-apps', protect, async (req, res) => {
+    res.json({ success: true, testing: 'yes we restarted' });
 });
 
 // @route   GET /api/jobs/applications/all
@@ -288,6 +310,19 @@ router.put('/applications/:id', protect, async (req, res) => {
 
         await application.save();
         res.json({ success: true, application });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Server Error' });
+    }
+});
+
+// @route   GET /api/jobs/:id
+// @desc    Get job by ID
+// @access  Public
+router.get('/:id', async (req, res) => {
+    try {
+        const job = await Job.findById(req.params.id);
+        if (!job) return res.status(404).json({ message: 'Job not found' });
+        res.json({ success: true, job });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Server Error' });
     }

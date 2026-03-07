@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getJobById } from '../api/jobs';
 import { applyToJob } from '../api/applications';
+import { uploadResume } from '../api/resume';
 import { useAuth } from '../context/AuthContext';
 
 export const Apply = () => {
@@ -13,6 +14,9 @@ export const Apply = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  const [resumeFile, setResumeFile] = useState(null);
+  const [resumeMessage, setResumeMessage] = useState('');
 
   const [formData, setFormData] = useState({
     fullName: user?.name || '',
@@ -31,7 +35,7 @@ export const Apply = () => {
         } else {
           setError('Job not found');
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load job details');
       } finally {
         setLoading(false);
@@ -48,12 +52,51 @@ export const Apply = () => {
     });
   };
 
+  const handleFileChange = (e) => {
+    if (e.target.files[0]) {
+      setResumeFile(e.target.files[0]);
+    }
+  };
+
+  const handleViewResume = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/resume/${user.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success && data.url) {
+        window.open(data.url, '_blank');
+      } else {
+        setResumeMessage('Failed to get resume: ' + (data.message || 'Unknown error'));
+      }
+    } catch {
+      setResumeMessage('Error viewing resume');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSubmitting(true);
 
     try {
+      // If a resume file is selected, upload it first
+      if (resumeFile) {
+        setResumeMessage('Uploading resume...');
+        const formDataResume = new FormData();
+        formDataResume.append('resume', resumeFile);
+        formDataResume.append('candidateId', user.id);
+
+        const resResume = await uploadResume(formDataResume);
+        if (!resResume.success) {
+          setError('Failed to upload resume: ' + resResume.error);
+          setSubmitting(false);
+          return;
+        }
+      }
+
       const result = await applyToJob(jobId, formData);
 
       if (result.success) {
@@ -184,7 +227,7 @@ export const Apply = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Resume / CV Link</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn Link</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
@@ -196,10 +239,40 @@ export const Apply = () => {
                         onChange={handleChange}
                         required
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-                        placeholder="https://linkedin.com/in/johndoe or Portfolio URL"
+                        placeholder="https://linkedin.com/in/johndoe"
                       />
                     </div>
-                    <p className="mt-1 text-xs text-gray-500">Provide a link to your LinkedIn, Portfolio, or hosted Resume.</p>
+                    <p className="mt-1 text-xs text-gray-500">Provide a link to your LinkedIn.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Resume (PDF)</label>
+                    <div className="mt-1 flex items-center space-x-4">
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        onChange={handleFileChange}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                        required={!(user?.resume === 'uploaded' || user?.resume === 'true') && !resumeFile}
+                      />
+                    </div>
+                    {resumeMessage && (
+                      <p className={`mt-2 text-sm ${resumeMessage.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
+                        {resumeMessage}
+                      </p>
+                    )}
+                    {user?.resume && (user.resume === 'uploaded' || user.resume === 'true') && (
+                      <div className="mt-2 flex items-center">
+                        <span className="text-sm text-green-600 font-medium mr-3">✅ Existing resume on file</span>
+                        <button
+                          onClick={handleViewResume}
+                          className="text-sm text-indigo-600 hover:text-indigo-800 underline focus:outline-none"
+                          type="button"
+                        >
+                          View it
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div>

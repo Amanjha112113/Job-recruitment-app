@@ -24,6 +24,11 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static('uploads')); // Serve uploaded files
 
+// Register Models explicitly to avoid MissingSchemaError
+require('./models/User');
+require('./models/Job');
+require('./models/Application');
+
 // Database Connection
 mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/recruitment')
     .then(() => console.log('MongoDB Connected'))
