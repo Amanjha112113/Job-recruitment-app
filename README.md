@@ -15,12 +15,7 @@
 [![Cloudinary Storage](https://img.shields.io/badge/Storage-Cloudinary-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)](https://cloudinary.com/)
 [![Vite Build](https://img.shields.io/badge/Build-Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Live Demo](https://img.shields.io/badge/Demo-Live-00C7B7?style=for-the-badge&logo=render&logoColor=white)](https://job-recruitment-backend-oeba.onrender.com)
-[![MIT License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge)](CONTRIBUTING.md)
-[![Code Style](https://img.shields.io/badge/code%20style-prettier-ff69b4?style=for-the-badge)](.prettierrc)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-339933?style=for-the-badge&logo=nodedotjs)](https://nodejs.org/)
-[![Build Status](https://img.shields.io/badge/Build-Passing-success?style=for-the-badge)](https://github.com/Amanjha112113/Job-recruitment-app/actions)
-[![Coverage](https://img.shields.io/badge/Coverage-85%25-brightgreen?style=for-the-badge)](https://github.com/Amanjha112113/Job-recruitment-app)
 [![Docker Ready](https://img.shields.io/badge/Container-Docker_Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](Dockerfile)
 
 ---
